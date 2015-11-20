@@ -1,0 +1,102 @@
+/**
+ * 
+ */
+package com.kohls.pig.udf.tokenizer;
+
+import java.io.IOException;
+
+import org.apache.pig.EvalFunc;
+
+import org.apache.pig.data.DataType;
+
+import org.apache.pig.data.Tuple;
+
+import org.apache.pig.data.TupleFactory;
+
+import org.apache.pig.impl.logicalLayer.schema.Schema;
+
+import com.kohls.bigdata.pig.udf.HashEmail;
+
+
+public class HashedTuple extends EvalFunc<Tuple> {
+
+	HashEmail hashEmail;
+	
+	Tuple tuple;
+
+	Tuple tuple_for_hash;
+
+	TupleFactory mTupleFacatory = TupleFactory.getInstance();
+	
+	public HashedTuple() {
+		hashEmail = new HashEmail();
+	}
+
+	@Override
+
+	public Tuple exec(Tuple input) throws IOException {
+
+		if (input == null || input.size() == 0) {
+
+			return null;
+
+		}
+
+		try {
+
+			tuple = mTupleFacatory.newTuple(input.size());
+
+			tuple_for_hash = mTupleFacatory.newTuple(1);
+
+			for (int i = 0; i < input.size(); i++) {
+
+				tuple_for_hash.set(0, input.get(i));
+
+				// tuple.set(i, input.get(i));
+				tuple.set(i, hashEmail.exec(tuple_for_hash));
+
+			}
+
+			return tuple;
+
+		}
+
+		catch (Exception e) {
+
+			// TODO Auto-generated catch block
+
+			throw new IOException("Caught exception processing input row ", e);
+
+		}
+
+	}
+
+	public Schema outputSchema(Schema input) {
+
+		try {
+
+			Schema tupleSchema = new Schema();
+
+			for (int i = 0; i < input.size(); i++) {
+
+				tupleSchema.add(new Schema.FieldSchema(input.getField(i).alias,
+
+				DataType.CHARARRAY));
+
+			}
+
+			return new Schema(new Schema.FieldSchema(getSchemaName(this
+
+			.getClass().getName().toLowerCase(), input), tupleSchema,
+
+			DataType.TUPLE));
+
+		} catch (Exception e) {
+
+			return null;
+
+		}
+
+	}
+
+}
